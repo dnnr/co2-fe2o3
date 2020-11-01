@@ -1,9 +1,11 @@
 use chrono;
 use async_trait::async_trait;
 
+pub mod collectd_exec;
 pub mod influx;
 pub mod print;
 
+use self::collectd_exec::{CollectdExecSink, CollectdExecConfig};
 use self::influx::{InfluxSink, InfluxConfig};
 use self::print::{PrintSink, PrintConfig};
 
@@ -14,14 +16,15 @@ use std::fmt;
 #[derive(Deserialize)]
 #[serde(tag = "type")]
 pub enum SinkConfig {
+    CollectdExec(CollectdExecConfig),
     Influx(InfluxConfig),
     Print(PrintConfig),
 }
 
 #[async_trait]
 pub trait Sink {
-    async fn add_measurement(&mut self, _: &Measurement);
-    async fn submit(&mut self);
+    fn add_measurement(&mut self, measurement: &Measurement);
+    fn submit(&mut self);
 }
 
 #[derive(Debug, Clone)]
@@ -45,6 +48,7 @@ pub fn from_config(sink_configs: &Vec<SinkConfig>) -> Vec<Box<dyn Sink + Send>> 
     let mut sinks = Vec::new();
     for sink_config in sink_configs {
         sinks.push(match sink_config {
+            SinkConfig::CollectdExec(val) => CollectdExecSink::from_config(val),
             SinkConfig::Influx(val) => InfluxSink::from_config(val),
             SinkConfig::Print(val) => PrintSink::from_config(val),
         });
