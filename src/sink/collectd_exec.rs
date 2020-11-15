@@ -1,5 +1,7 @@
 extern crate chrono;
 
+use async_trait::async_trait;
+
 use super::Sink;
 
 #[derive(Deserialize)]
@@ -9,12 +11,13 @@ pub struct CollectdExecSink {
     points: Vec<super::Measurement>,
 }
 
+#[async_trait]
 impl Sink for CollectdExecSink {
-    fn add_measurement(&mut self, measurement: &super::Measurement) {
+    async fn add_measurement(&mut self, measurement: &super::Measurement) {
         self.points.push(measurement.to_owned());
     }
 
-    fn submit(&mut self) {
+    async fn submit(&mut self) {
         self.points.retain(|point| {
             let mut fields: Vec<_> = point.fields.iter().collect();
             fields.sort_by(|a, b| a.0.cmp(b.0));
@@ -28,7 +31,7 @@ impl Sink for CollectdExecSink {
 }
 
 impl CollectdExecSink {
-    pub fn from_config(_config: &CollectdExecConfig) -> Box<dyn Sink> {
+    pub fn from_config(_config: &CollectdExecConfig) -> Box<dyn Sink + Send> {
         Box::new(CollectdExecSink { points: Vec::new() })
     }
 }

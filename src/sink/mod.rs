@@ -23,8 +23,8 @@ pub enum SinkConfig {
 
 #[async_trait]
 pub trait Sink {
-    fn add_measurement(&mut self, measurement: &Measurement);
-    fn submit(&mut self);
+    async fn add_measurement(&mut self, _: &Measurement);
+    async fn submit(&mut self);
 }
 
 #[derive(Debug, Clone)]
