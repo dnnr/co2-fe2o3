@@ -6,9 +6,6 @@ type = "Print"
 [[sink]]
 type = "CollectdExec"
 host_plugin = "raspi/co2"
-plugin = "co2"
-type_co2 = "gauge"
-type_temperature = "temperature"
 
 
 [[sink]]

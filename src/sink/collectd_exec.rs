@@ -7,8 +7,6 @@ use super::Sink;
 #[derive(Deserialize, Clone)]
 pub struct CollectdExecConfig {
     pub host_plugin: String,
-    pub type_co2: String,
-    pub type_temperature: String,
 }
 
 pub struct CollectdExecSink {
@@ -23,17 +21,23 @@ impl Sink for CollectdExecSink {
     }
 
     async fn submit(&mut self) {
+        // Intermediate reference to avoid borrowing self in closure:
         let config = &self.config;
+
         self.points.retain(|point| {
             let mut fields: Vec<_> = point.fields.iter().collect();
             fields.sort_by(|a, b| a.0.cmp(b.0));
             for (field_name, field_value) in fields.iter() {
+                // Map field name to a type from collectd's types.db
                 let type_name = match field_name.as_str() {
-                    "co2" => &config.type_co2,
-                    "temperature" => &config.type_temperature,
+                    "co2" => "gauge",
+                    "temperature" => "temperature",
                     _ => "gauge",
                 };
-                let identifier = format!("{}/{}", config.host_plugin, type_name);
+
+                // Assemble identifier: host/plugin/type-typeinstance
+                let identifier = format!("{}/{}-{}", config.host_plugin, type_name, field_name);
+
                 println!(
                     "PUTVAL {} {}:{}",
                     identifier,
