@@ -6,8 +6,7 @@ use super::Sink;
 
 #[derive(Deserialize)]
 pub struct CollectdExecConfig {
-    pub identifier: String
-
+    pub identifier: String,
 }
 
 pub struct CollectdExecSink {
@@ -28,7 +27,12 @@ impl Sink for CollectdExecSink {
             fields.sort_by(|a, b| a.0.cmp(b.0));
             for (field_name, field_value) in fields.iter() {
                 let identifier = format!("{}/{}", identifier, field_name);
-                println!("PUTVAL {} {}:{}", identifier, point.timestamp.timestamp(), field_value);
+                println!(
+                    "PUTVAL {} {}:{}",
+                    identifier,
+                    point.timestamp.timestamp(),
+                    field_value
+                );
             }
             false
         });
