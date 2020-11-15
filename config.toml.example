@@ -4,6 +4,11 @@ poll_interval = 10
 type = "Print"
 
 [[sink]]
+type = "CollectdExec"
+identifier = "foo/bar"
+
+
+[[sink]]
 type = "Influx"
 host = "https://example.com/influxdb"
 database = "climate"
