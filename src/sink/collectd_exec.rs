@@ -4,14 +4,16 @@ use async_trait::async_trait;
 
 use super::Sink;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct CollectdExecConfig {
-    pub identifier: String,
+    pub host_plugin: String,
+    pub type_co2: String,
+    pub type_temperature: String,
 }
 
 pub struct CollectdExecSink {
     points: Vec<super::Measurement>,
-    identifier: String,
+    config: CollectdExecConfig,
 }
 
 #[async_trait]
@@ -21,12 +23,17 @@ impl Sink for CollectdExecSink {
     }
 
     async fn submit(&mut self) {
-        let identifier = &self.identifier;
+        let config = &self.config;
         self.points.retain(|point| {
             let mut fields: Vec<_> = point.fields.iter().collect();
             fields.sort_by(|a, b| a.0.cmp(b.0));
             for (field_name, field_value) in fields.iter() {
-                let identifier = format!("{}/{}", identifier, field_name);
+                let type_name = match field_name.as_str() {
+                    "co2" => &config.type_co2,
+                    "temperature" => &config.type_temperature,
+                    _ => "gauge",
+                };
+                let identifier = format!("{}/{}", config.host_plugin, type_name);
                 println!(
                     "PUTVAL {} {}:{}",
                     identifier,
@@ -41,12 +48,9 @@ impl Sink for CollectdExecSink {
 
 impl CollectdExecSink {
     pub fn from_config(config: &CollectdExecConfig) -> Box<dyn Sink + Send> {
-        // Sanitize identifier by removing trailing slashes
-        let identifier = config.identifier.trim_end_matches("/");
-
         Box::new(CollectdExecSink {
             points: Vec::new(),
-            identifier: String::from(identifier),
+            config: config.clone(),
         })
     }
 }
